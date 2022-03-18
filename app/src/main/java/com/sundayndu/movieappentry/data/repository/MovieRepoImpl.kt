@@ -7,7 +7,8 @@ import com.sundayndu.movieappentry.model.Movie
 import com.sundayndu.movieappentry.utils.ResultState
 import com.sundayndu.movieappentry.utils.extensions.onStartAndErrorResultState
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -54,14 +55,9 @@ class MovieRepoImpl @Inject constructor(
             val cachedLatest = dbService.movieDao().selectMoviesByType("UPCOMING")
             emit(ResultState.Success(cachedLatest))
         }
-            .onStart {
-                val cachedLatest = dbService.movieDao().selectMoviesByType("UPCOMING")
-                emit(ResultState.Loading(cachedLatest))
+            .onStartAndErrorResultState(dispatcher) {
+                dbService.movieDao().selectMoviesByType("UPCOMING")
             }
-            .catch { err ->
-                emit(ResultState.Error(err))
-            }
-            .flowOn(dispatcher)
 
     override suspend fun emitAllCachedMovie(): ResultState<List<Movie>> {
         return withContext(dispatcher) {
